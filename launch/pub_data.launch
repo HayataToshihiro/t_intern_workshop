@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+	<node pkg="tf" type="static_transform_publisher" name="vel_tf_broadcaster"
+		args="0 0 1.700 0.0 0 0 /matching_base_link /velodyne 100" />
+
+	<node pkg="tf" type="static_transform_publisher" name="cam_tf_broadcaster"
+		args="2.0 0.0 1.000 0.0 0 0 /matching_base_link /camera 100" />
+
+	<rosparam file="$(find intern_workshop)/yaml/run_scene.yaml" />
+
+	<node name="pub_data" pkg="intern_workshop" type="pub_data" output="screen" />
+	<include file="$(find velodyne_pointcloud)/launch/32e_points.launch"/>
+    <node pkg="nodelet" type="nodelet" name="heightmap_nodelet"
+        args="load velodyne_height_map/HeightMapNodelet velodyne_nodelet_manager">
+        <param name="cell_size" value="0.5"/>
+        <param name="full_clouds" value="true"/>
+        <param name="grid_dimensions" value="400"/>
+        <param name="height_threshold" value="0.2"/>
+    </node>
+    <!-- <node pkg="velodyne_height_map" type="heightmap_node" name="heightmap"> -->
+    <!--     <param name="cell_size" value="0.5"/> -->
+    <!--     <param name="full_clouds" value="true"/> -->
+    <!--     <param name="grid_dimensions" value="400"/> -->
+    <!--     <param name="height_threshold" value="0.2"/> -->
+    <!-- </node> -->
+
+
+    <node pkg="clustering" type="clustering_" name="euclidean_clustering">
+        <remap from="/cloud"    to="/velodyne_obstacles"/>
+    </node>
+	<node pkg="clustering" type="pickup_cluster_" name="pickup_cluster">
+		<param name="max_width" value="1.5" type="double"/>
+		<param name="max_depth" value="1.5" type="double"/>
+		<param name="max_height" value="2.2" type="double"/>
+		<param name="min_width" value="0.2" type="double"/>
+		<param name="min_depth" value="0.2" type="double"/>
+		<param name="min_height" value="0.8" type="double"/>
+    </node>
+
+	<!-- <node pkg="pcl_tutorials" type="voxel" name="voxel"  /> -->
+
+	<!-- <node pkg="pcl_tutorials" type="jsk_bbox" name="jsk_bbox"  > -->
+	<!-- 	<!&#45;&#45; <remap from ="cluster/centroid" to="dynamic_cluster/centroid" /> &#45;&#45;> -->
+	<!-- </node> -->
+	<!-- <node pkg="crossing" type="car_track" name="car_track"  /> -->
+	<!-- <node pkg="pcl_tutorials" type="lidar_image_match" name="lidar_image_match"  /> -->
+
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(env HOME)/.rviz/toyota_intern.rviz"/>
+</launch>
